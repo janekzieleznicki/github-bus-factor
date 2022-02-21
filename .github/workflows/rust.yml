@@ -25,6 +25,8 @@ jobs:
           command: build
           args: --verbose --all-features
       - uses: actions-rs/cargo@v1
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: test
           args: --verbose --all-features
