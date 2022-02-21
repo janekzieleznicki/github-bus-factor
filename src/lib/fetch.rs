@@ -4,7 +4,7 @@ use reqwest::header::{ACCEPT, AUTHORIZATION, HOST, USER_AGENT};
 use std::env;
 use tokio::sync::mpsc::Sender;
 
-struct Fetcher {
+pub struct Fetcher {
     token: String,
     client: reqwest::Client,
 }
@@ -26,10 +26,17 @@ impl Fetcher {
         count: usize,
         mut tx: Sender<Repository>,
     ) -> Result<(), Error> {
-        let mut repos = self.fetch_repositories(language, count).await?;
-        for mut repo in repos {
-            self.fetch_contributors(&mut repo).await?;
-            tx.send(repo).await?;
+        let mut requests = Vec::new();
+        for _ in 0..count / 100 {
+            requests.push(100);
+        }
+        requests.push(count % 100);
+        for cnt in requests {
+            let mut repos = self.fetch_repositories(language, count).await?;
+            for mut repo in repos {
+                self.fetch_contributors(&mut repo).await?;
+                tx.send(repo).await?;
+            }
         }
         Ok(())
     }
@@ -43,16 +50,15 @@ impl Fetcher {
             lng = language,
             count = count
         );
-        let res = dbg!(self
+        let res = self
             .client
             .get(url)
             .bearer_auth(&self.token)
             .header(USER_AGENT, "rust-reqwest")
             .header(HOST, "api.github.com:443")
-            .header(ACCEPT, "application/vnd.github.v3+json"))
-        .send()
-        .await?;
-        dbg!(&res);
+            .header(ACCEPT, "application/vnd.github.v3+json")
+            .send()
+            .await?;
         match res.status() {
             reqwest::StatusCode::OK => match res.json::<RepositoriesResponse>().await {
                 Ok(parsed) => Ok(parsed.repos),
@@ -65,15 +71,15 @@ impl Fetcher {
     async fn fetch_contributors(&self, repo: &mut Repository) -> Result<(), Error> {
         // todo contributors count is hardcoded to 25
         let url = format!("{}?q=anon:true&per_page={}", repo.contributors_url, 25);
-        let res = dbg!(self
+        let res = self
             .client
             .get(url)
             .bearer_auth(&self.token)
             .header(USER_AGENT, "rust-reqwest")
             .header(HOST, "api.github.com:443")
-            .header(ACCEPT, "application/vnd.github.v3+json"))
-        .send()
-        .await?;
+            .header(ACCEPT, "application/vnd.github.v3+json")
+            .send()
+            .await?;
         match res.status() {
             reqwest::StatusCode::OK => {
                 return match res.json::<Vec<Contributor>>().await {
