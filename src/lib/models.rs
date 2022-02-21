@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Contributor {
     pub login: String,
     pub contributions: usize,
@@ -8,7 +8,7 @@ pub struct Contributor {
     pub bus_factor: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Repository {
     pub id: u64,
     pub node_id: String,
@@ -31,7 +31,7 @@ impl Repository {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RepositoriesResponse {
     #[serde(rename = "total_count")]
