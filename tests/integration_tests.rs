@@ -1,5 +1,4 @@
-use busfactorlib::models::{Contributor, RepositoriesResponse, Repository};
-use serde_json::{Result, Value};
+use busfactorlib::models::{Contributor, RepositoriesResponse};
 use std::fs::File;
 use std::io::BufReader;
 
